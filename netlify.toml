@@ -1,5 +1,5 @@
 [build]
-  command = "node scripts/patch.mjs"
+  command = "node scripts/patch.mjs && node scripts/final83.mjs"
   publish = "dist"
 
 [[headers]]
