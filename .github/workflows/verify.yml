@@ -19,6 +19,15 @@ jobs:
         run: |
           node scripts/patch.mjs
           node scripts/final83.mjs
+      - name: Install headless browser for interaction smoke test
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Run browser interaction smoke test
+        run: |
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory dist >/tmp/aiedap-http.log 2>&1 &
+          sleep 2
+          node scripts/smoke.mjs
       - name: Check 83 slides and all activities
         run: |
           node --input-type=module <<'EOF'
