@@ -1,0 +1,41 @@
+name: Verify Module4 final site
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate scripts
+        run: |
+          node --check scripts/patch.mjs
+          node --check scripts/final83.mjs
+      - name: Build the actual Netlify output
+        run: |
+          node scripts/patch.mjs
+          node scripts/final83.mjs
+      - name: Check 83 slides and all activities
+        run: |
+          node --input-type=module <<'EOF'
+          import { readFileSync } from 'node:fs';
+          import vm from 'node:vm';
+          const html=readFileSync('dist/index.html','utf8');
+          const block=(a,b)=>html.slice(html.indexOf('const '+a+'=')+('const '+a+'=').length,html.indexOf(';\n'+b,html.indexOf('const '+a+'=')));
+          const slides=JSON.parse(block('EMBEDDED_SLIDE_DATA','const SLIDE_IMAGES='));
+          const imgs=JSON.parse(block('SLIDE_IMAGES','const LESSONS='));
+          const lessons=JSON.parse(block('LESSONS','const STAGES='));
+          const stages=JSON.parse(block('STAGES','const CHECKS='));
+          const linked=JSON.parse(block('SLIDE_STAGE','function sectionEntries'));
+          if(slides.length!==83||imgs.length!==84||lessons.length!==4||stages.length!==9)throw Error('Slide or activity count mismatch');
+          if(lessons[3].to!==83||linked['18']!=='s0'||linked['76']!=='s7')throw Error('Slide activity mapping mismatch');
+          if(!html.includes('id="course-pdf"')||!html.includes('course-final-v83'))throw Error('Final PDF option missing');
+          const script=html.match(/<script type="module">([\s\S]*?)<\/script>/)?.[1];
+          if(!script)throw Error('App script missing');
+          new vm.Script(script);
+          console.log('OK: 83 slides, 4 lessons, 9 panels, PDF option and parseable client script');
+          EOF
