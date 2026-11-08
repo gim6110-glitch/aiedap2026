@@ -1,4 +1,4 @@
-import {readFileSync,writeFileSync} from 'node:fs';
+import {readFileSync,writeFileSync,existsSync,copyFileSync} from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 let html=readFileSync('dist/index.html','utf8');
@@ -83,4 +83,5 @@ const extra=[
 html=html.replace('initEvents();loadSlideData();',extra+'\ninitEvents();loadSlideData();');
 assert(html.includes('course-final-v83'));assert(html.includes('max="83"'));assert.equal(slides.length,83);
 writeFileSync('dist/index.html',html,'utf8');
+if(existsSync('course-final.pdf'))copyFileSync('course-final.pdf','dist/course-final.pdf');
 console.log('Final module4: 83 pages, 9 steps, migrated legacy browser state, '+Buffer.byteLength(html)+' bytes');
